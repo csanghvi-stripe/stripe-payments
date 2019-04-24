@@ -1,0 +1,22 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Launch Program",
+            "program": "${workspaceFolder}/server/node/server.js",
+            "runtimeArgs": ["--harmony-promise-finally"],
+            "env": {
+                "STRIPE_PUBLISHABLE_KEY":"pk_test_pmGJs4TwRR3jTAZZ2Gefesqw",
+                "STRIPE_CUSTOMER_ID":"cus_EZvT8YmPx1b5lS",
+                "STRIPE_3DS_CARD_SOURCE_ID":"src_1E6os6Cz5V6sF6ISvWmLheFP",
+                "STRIPE_CARD_SOURCE_ID":"src_1E6laDCz5V6sF6ISNRuNddZm",
+                "STRIPE_SECRET_KEY":"sk_test_HmLHFo4M0h4eEYDVrzAV7axx"
+            }
+        }
+    ]
+}
