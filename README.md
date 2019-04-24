@@ -1,4 +1,33 @@
-# Stripe Payments Demo
+# Stripe Traced Payment Intents
+
+[**Live Demo**](https://stripe-payments-demo.stripe-tracer.com)
+
+An interactively traced Payment Intents demo using [Stripe Tracer ("Aquarium")](https://git.corp.stripe.com/stevene/aquarium). This allows users to trace any combination of
+
+- Manual Confirmation Flow
+- Automatic Confirmation Flow
+
+**AND**
+
+- Connect Destination Charges
+- Connect Separate Charge & Transfers
+
+**AND**
+
+- Stored Card
+- Stored 3DS Card
+- New Card (via Elements)
+
+This is a _forked_ version of the official [Stripe Payments Demo](https://stripe-payments-demo.appspot.com/). Why is this forked?:
+
+- Stripe Tracer can't be shipped on official demo's because we can't get funding for a design pass.
+- Stripe Payments Demo doesn't cover the different possible payment paths and combination this one considers.
+
+## Dependencies
+
+Running this demo locally requires the Stripe Tracer NPM server to be configured. See the [instructions here](https://git.corp.stripe.com/stevene/aquarium/tree/master/verdaccio).
+
+## Demo Readme
 
 This demo features a sample e-commerce store that uses [Stripe Elements](https://stripe.com/docs/elements), [PaymentIntents](https://stripe.com/docs/payments/payment-intents) for [Dynamic 3D Secure](https://stripe.com/docs/payments/dynamic-3ds), and the [Sources API](https://stripe.com/docs/sources) to illustrate how to accept both card payments and additional payment methods on the web.
 
@@ -67,9 +96,9 @@ There are a couple server implementations in the [`server`](/server) directory. 
 
 You’ll need the following:
 
-* [Node.js](http://nodejs.org) >= 8.x.
-* Modern browser that supports ES6 (Chrome to see the Payment Request, and Safari to see Apple Pay).
-* Stripe account to accept payments ([sign up](https://dashboard.stripe.com/register) for free).
+- [Node.js](http://nodejs.org) >= 8.x.
+- Modern browser that supports ES6 (Chrome to see the Payment Request, and Safari to see Apple Pay).
+- Stripe account to accept payments ([sign up](https://dashboard.stripe.com/register) for free).
 
 In your Stripe Dashboard, you can [enable the payment methods](https://dashboard.stripe.com/payments/settings) you’d like to test with one click.
 
@@ -111,5 +140,5 @@ Use this second URL in your browser to start the demo.
 
 ## Credits
 
-* Code: [Romain Huet](https://twitter.com/romainhuet) and [Thorsten Schaeff](https://twitter.com/thorwebdev)
-* Design: [Tatiana Van Campenhout](https://twitter.com/tatsvc)
+- Code: [Romain Huet](https://twitter.com/romainhuet) and [Thorsten Schaeff](https://twitter.com/thorwebdev)
+- Design: [Tatiana Van Campenhout](https://twitter.com/tatsvc)
