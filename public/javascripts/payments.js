@@ -30,6 +30,7 @@
   const piConfirmationDropDown = document.getElementById(
     'pi-confirmation-selection'
   );
+  const futureUsageDropdown = document.getElementById('future-usage-selection');
   // const request3DSecureCheckbox = document.getElementById('request-3d-secure');
   const query = window.location.search;
   const queryParsed = Qs.parse(query.replace('?', ''));
@@ -51,16 +52,29 @@
   ).href = `https://stripe-tracer.com?aquarium-id=${aquariumId}`;
   piConfirmationDropDown.value = store.demoConfig.piConfirmation;
   workflowDropDown.value = store.demoConfig.workflow;
+  futureUsageDropdown.value = store.demoConfig.usage;
   // request3DSecureCheckbox.checked = store.demoConfig.request3DSecure === 'true';
-  workflowDropDown.addEventListener('change', () => {
+  workflowDropDown.addEventListener('change', () =>
     store.updateConfig({
       workflow: workflowDropDown.value,
-    });
-  });
+    })
+  );
   piConfirmationDropDown.addEventListener('change', () => {
     store.updateConfig({
       piConfirmation: piConfirmationDropDown.value,
     });
+  });
+  futureUsageDropdown.addEventListener('change', () => {
+    // off-session payments must use server-side confirmation
+    store.updateConfig({
+      usage: futureUsageDropdown.value,
+    });
+    if ('offSession' === futureUsageDropdown.value) {
+      store.updateConfig({
+        piConfirmation: 'serverconfirmation',
+      });
+      piConfirmationDropDown.value = 'serverconfirmation';
+    }
   });
   // request3DSecureCheckbox.addEventListener('change', event => {
   //   if (event.target.checked) {
@@ -335,6 +349,10 @@
       payment === 'card' ||
       payment === 'stored_card' ||
       payment === 'stored_card_3ds';
+
+    // Use a SetupIntent when the user will be charged off-sesion
+    const usesSetupIntent = store.demoConfig.usage === 'offSession';
+
     let cardSource, customer;
     // Note: PaymentIntents Beta currently only support card sources to enable dynamic authentication:
     // https://stripe.com/docs/payments/dynamic-3ds
@@ -360,9 +378,46 @@
       shipping,
       usesPaymentIntent,
       cardSource ? cardSource.id : undefined,
-      customer
+      customer,
+      usesSetupIntent
     );
-    if (usesPaymentIntent) {
+    let error;
+    if (usesSetupIntent) {
+      submitButton.textContent = 'Setting up Payment Method...';
+      let setupIntent = order.setupIntent;
+
+      const cardSetupResult = await stripe.handleCardSetup(setupIntent, card);
+      const {setupIntent: confirmedSetupIntent} = cardSetupResult;
+      error = cardSetupResult.error;
+
+      submitButton.textContent =
+        'Processing off-session Payment in 5 seconds...';
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      submitButton.textContent =
+        'Processing off-session Payment in 4 seconds...';
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      submitButton.textContent =
+        'Processing off-session Payment in 3 seconds...';
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      submitButton.textContent =
+        'Processing off-session Payment in 2 seconds...';
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      submitButton.textContent =
+        'Processing off-session Payment in 1 seconds...';
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      submitButton.textContent = 'Processing off-session payment...';
+      const result = await store.payOrder({
+        order,
+        setupIntentPaymentMethod: confirmedSetupIntent.payment_method,
+      });
+      order.paymentIntent = result.paymentIntent;
+      error = result.error;
+      if (error) {
+        return await handleOrder({metadata: {status: 'failed'}}, null, error);
+      }
+    }
+
+    if (usesPaymentIntent && order.paymentIntent) {
       let paymentIntent = order.paymentIntent;
       let error;
       // Let Stripe handle source activation
@@ -384,6 +439,9 @@
         );
         paymentIntent = result.paymentIntent;
         error = result.error;
+        if (error) {
+          return await handleOrder({metadata: {status: 'failed'}}, null, error);
+        }
       }
       if (
         // If the Payment Intent has a source, requires confirmation or
@@ -398,26 +456,40 @@
         );
         paymentIntent = result.paymentIntent;
         error = result.error;
+        if (error) {
+          return await handleOrder({metadata: {status: 'failed'}}, null, error);
+        }
       }
-      if (paymentIntent.status === 'requires_confirmation'
-        && paymentIntent.confirmation_method === 'manual' &&
-        ['card', 'stored_card', 'stored_card_3ds'].includes(payment)) {
+      if (
+        paymentIntent.status === 'requires_confirmation' &&
+        paymentIntent.confirmation_method === 'manual' &&
+        ['card', 'stored_card', 'stored_card_3ds'].includes(payment)
+      ) {
         const result = await store.payOrder({
-          order, paymentIntentId: paymentIntent.id
+          order,
+          paymentIntentId: paymentIntent.id,
         });
         paymentIntent = result.paymentIntent;
         error = result.error;
+        if (error) {
+          return await handleOrder({metadata: {status: 'failed'}}, null, error);
+        }
       }
       // handleCardPayment confirms under the covers
-      if (paymentIntent.status === 'requires_confirmation'
-        || paymentIntent.status === 'requires_action'
-        && paymentIntent.confirmation_method === 'automatic' &&
-        ['card', 'stored_card', 'stored_card_3ds'].includes(payment)) {
+      if (
+        paymentIntent.status === 'requires_confirmation' ||
+        (paymentIntent.status === 'requires_action' &&
+          paymentIntent.confirmation_method === 'automatic' &&
+          ['card', 'stored_card', 'stored_card_3ds'].includes(payment))
+      ) {
         const result = await stripe.handleCardPayment(
           paymentIntent.client_secret
         );
         paymentIntent = result.paymentIntent;
         error = result.error;
+        if (error) {
+          return await handleOrder({metadata: {status: 'failed'}}, null, error);
+        }
       }
 
       if (error) {

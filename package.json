@@ -26,7 +26,7 @@
     "morgan": "^1.8.1",
     "pusher": "^2.2.0",
     "query-string": "^6.2.0",
-    "stripe": "^6.28.0"
+    "stripe": "^7.4.0"
   },
   "devDependencies": {
     "longjohn": "^0.2.12",

@@ -101,6 +101,33 @@ const traceStripeClient = () => {
       docUrl: 'https://stripe.com/docs/api/payment_intents/confirm',
     },
   });
+  stripe.setupIntents.create = tracer.watchAction({
+    actionFunction: stripe.setupIntents.create,
+    name: 'setupIntents.create',
+    metadata: {
+      description:
+        'Creates a SetupIntent object that can be used to setup a Payment Method for off-session use without an initial payment.',
+      docUrl: 'https://stripe.com/docs/api/setup_intents/create',
+    },
+  });
+  stripe.setupIntents.confirm = tracer.watchAction({
+    actionFunction: stripe.setupIntents.confirm,
+    name: 'setupIntents.confirm',
+    metadata: {
+      description:
+        'Confirms a SetupIntent object. Inspect this object to see if authentication was required. If so, you will need to handle this on the client with stripejs.handleCardSetup.',
+      docUrl: 'https://stripe.com/docs/api/setup_intents/confirm',
+    },
+  });
+  stripe.customers.create = tracer.watchAction({
+    actionFunction: stripe.customers.create,
+    name: 'customers.create',
+    metadata: {
+      description:
+        'Creates a Customer object which can be used to attach a Payment Method.',
+      docUrl: 'https://stripe.com/docs/api/customers/create',
+    },
+  });
   stripe.transfers.create = tracer.watchAction({
     actionFunction: stripe.transfers.create,
     name: 'transfers.create',

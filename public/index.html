@@ -368,6 +368,17 @@
                   </select>
                 </span>
               </label>
+              <label class="select">
+                <span>Payment Session:</span>
+                <span class="select">
+                  <select id="future-usage-selection">
+                    <option value="onSession">On-session</option>
+                    <option value="offSession"
+                      >Off-session, (No-initial Charge)</option
+                    >
+                  </select>
+                </span>
+              </label>
             </fieldset>
             <!-- <input
               id="request-3d-secure"
@@ -390,13 +401,25 @@
         </div>
         <div class="line-item demo">
           <div id="demo">
-            <p class="label">Demo in test mode</p>
+            <p class="label">Testmode cards</p>
             <p class="note">
               This app is running in test mode. You will <em>not</em> be
               charged.
             </p>
             <p class="note">
-              Use 4000000000003063 to trigger 3DS
+              Use <strong>4000002500003155</strong> to require authentication on
+              first transaction
+            </p>
+            <p class="note">
+              Use <strong>4000002760003184</strong> to require authentication
+            </p>
+            <p class="note">
+              Use <strong>4000008260003178</strong> to require authentication
+              (fails with insufficient_funds)
+            </p>
+            <p class="note">
+              Use <strong>4000000000003055</strong> to for optional
+              authentication
             </p>
             <p class="note">
               Run this app locally in live mode with your Stripe account to

@@ -43,6 +43,7 @@ router.post('/orders', async (req, res, next) => {
     createIntent,
     source,
     customer,
+    createSetupIntent,
   } = req.body;
   try {
     console.log(req.body);
@@ -54,7 +55,8 @@ router.post('/orders', async (req, res, next) => {
       shipping,
       createIntent,
       source,
-      customer
+      customer,
+      createSetupIntent
     );
     return res.status(200).json({order});
   } catch (err) {
@@ -64,7 +66,12 @@ router.post('/orders', async (req, res, next) => {
 
 // Complete payment for an order using a source.
 router.post('/orders/:id/pay', async (req, res, next) => {
-  let {source, payment_intent: paymentIntentId} = req.body;
+  let {
+    source,
+    demoConfig,
+    payment_intent: paymentIntentId,
+    off_session_payment_method: offSessionPaymentMethod,
+  } = req.body;
   try {
     // Retrieve the order associated to the ID.
     let order = await orders.retrieve(req.params.id);
@@ -106,13 +113,29 @@ router.post('/orders/:id/pay', async (req, res, next) => {
         status = 'failed';
       }
       // Update the order with the charge status.
-      order = await orders.update({order, properties: {metadata: {status}}});
+      order = await orders.update({
+        demoConfig,
+        order,
+        properties: {metadata: {status}},
+      });
+    } else if (offSessionPaymentMethod) {
+      // Update the order with the charge status and possibly
+      // confirm the payment intent
+      let result = await orders.update({
+        order,
+        properties: {metadata: {status}},
+        demoConfig,
+        offSessionPaymentMethod,
+      });
+      order = result.order;
+      paymentIntent = result.paymentIntent;
     } else {
       // Update the order with the charge status and possibly
       // confirm the payment intent
       let result = await orders.update({
         order,
         properties: {metadata: {status}},
+        demoConfig,
         paymentIntentId,
       });
       order = result.order;

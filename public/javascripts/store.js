@@ -19,6 +19,7 @@ class Store {
       request3DSecure: url.searchParams.get('request3DSecure') || 'false',
       piConfirmation:
         url.searchParams.get('piConfirmation') || 'clientconfirmation',
+      usage: url.searchParams.get('usage') || 'onSession',
     };
 
     this.lineItems = [];
@@ -93,7 +94,8 @@ class Store {
     shipping,
     createIntent = false,
     source,
-    customer
+    customer,
+    createSetupIntent
   ) {
     try {
       const response = await fetch('/orders', {
@@ -108,6 +110,7 @@ class Store {
           createIntent,
           source,
           customer,
+          createSetupIntent,
         }),
       });
       const data = await response.json();
@@ -124,12 +127,17 @@ class Store {
   }
 
   // Pay the specified order by sending a payment source alongside it.
-  async payOrder({order, source, paymentIntentId}) {
+  async payOrder({order, source, paymentIntentId, setupIntentPaymentMethod}) {
     try {
       const response = await fetch(`/orders/${order.id}/pay`, {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({source, payment_intent: paymentIntentId}),
+        body: JSON.stringify({
+          source,
+          demoConfig: store.demoConfig,
+          payment_intent: paymentIntentId,
+          off_session_payment_method: setupIntentPaymentMethod,
+        }),
       });
       const data = await response.json();
       if (data.error) {

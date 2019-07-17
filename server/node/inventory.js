@@ -26,7 +26,8 @@ const createOrder = async (
   shipping,
   createIntent,
   payment_method,
-  customer
+  customer,
+  usesSetupIntent
 ) => {
   // Create order
   let order = await stripeOrders.orders.create({
@@ -38,7 +39,10 @@ const createOrder = async (
       status: 'created',
     },
   });
-  if (createIntent) {
+  if (usesSetupIntent) {
+    const setupIntent = await stripe.setupIntents.create();
+    order.setupIntent = setupIntent.client_secret;
+  } else if (createIntent) {
     // Create PaymentIntent to represent your customer's intent to pay this order.
     // Note: PaymentIntents currently only support card sources to enable dynamic authentication:
     // // https://stripe.com/docs/payments/dynamic-3ds
@@ -53,7 +57,10 @@ const createOrder = async (
       customer,
       // Only attempt to confirm manual confirmation on creation if thats the
       // selected flow
-      confirmation_method: demoConfig.piConfirmation === 'serverconfirmation' ? 'manual' : undefined,
+      confirmation_method:
+        demoConfig.piConfirmation === 'serverconfirmation'
+          ? 'manual'
+          : undefined,
       confirm: demoConfig.piConfirmation === 'serverconfirmation',
       use_stripe_sdk: true,
     };
@@ -96,22 +103,44 @@ const retrieveOrder = async orderId => {
 };
 
 // Update an order.
-const updateOrder = async ({order, properties = {}, paymentIntentId}) => {
+const updateOrder = async ({
+  order,
+  properties = {},
+  demoConfig,
+  paymentIntentId,
+  offSessionPaymentMethod,
+}) => {
   let paymentIntent;
   if (paymentIntentId) {
     paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
     if (paymentIntent.status === 'requires_confirmation') {
-      paymentIntent = await stripe.paymentIntents.confirm(paymentIntentId,);
+      paymentIntent = await stripe.paymentIntents.confirm(paymentIntentId);
     }
     if (paymentIntent.status === 'success') {
-      properties.metadata.status = 'paid'
+      properties.metadata.status = 'paid';
+    }
+  }
+  if (offSessionPaymentMethod) {
+    const customer = await stripe.customers.create({
+      payment_method: offSessionPaymentMethod,
+    });
+    paymentIntent = await stripe.paymentIntents.create({
+      amount: order.amount,
+      currency: order.currency,
+      customer: customer.id,
+      payment_method: offSessionPaymentMethod,
+      off_session: true,
+      confirm: demoConfig.piConfirmation === 'serverconfirmation',
+    });
+    if (paymentIntent.status === 'success') {
+      properties.metadata.status = 'paid';
     }
   }
   let updatedOrder = order;
   updatedOrder = await stripeOrders.orders.update(order.id, properties);
   return {
     paymentIntent,
-    order: updatedOrder
+    order: updatedOrder,
   };
 };
 

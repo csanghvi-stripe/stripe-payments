@@ -1316,9 +1316,10 @@ string_decoder@~0.10.x:
   version "0.10.31"
   resolved "https://npm-dot-stripe-terminal-js-demo.appspot.com/string_decoder/-/string_decoder-0.10.31.tgz#62e203bc41766c6c28c9fc84301dab1c5310fa94"
 
-stripe@^6.28.0:
-  version "6.28.0"
-  resolved "https://npm-dot-stripe-terminal-js-demo.appspot.com/stripe/-/stripe-6.28.0.tgz#81f2bf174efe9503b50f24930a7e1d195c60f810"
+stripe@^7.4.0:
+  version "7.4.0"
+  resolved "https://npm-dot-stripe-terminal-js-demo.appspot.com/stripe/-/stripe-7.4.0.tgz#d40834f7763ebe775fe944db94bd3f31f291b0fc"
+  integrity sha512-eurSZJw45MvnV7PjmFHMgJMkCihHgqGHr11OHpFdMh+5CCyYvbVlA5uP5VoVQakhYjSLCObs0dbXtGYhIAMKvw==
   dependencies:
     lodash.isplainobject "^4.0.6"
     qs "^6.6.0"
