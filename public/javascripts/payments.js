@@ -358,7 +358,8 @@
     // https://stripe.com/docs/payments/dynamic-3ds
     if (
       store.demoConfig.piConfirmation === 'serverconfirmation' &&
-      payment === 'card'
+      payment === 'card' &&
+      !usesSetupIntent
     ) {
       // Useful if we want to inspect the newly entered card information
       // prior to initiating payment
@@ -389,7 +390,9 @@
       const cardSetupResult = await stripe.handleCardSetup(setupIntent, card);
       const {setupIntent: confirmedSetupIntent} = cardSetupResult;
       error = cardSetupResult.error;
+      cardSource = confirmedSetupIntent.payment_method;
 
+      // Yes probably should be a loop but this was way quicker to write!
       submitButton.textContent =
         'Processing off-session Payment in 5 seconds...';
       await new Promise(resolve => setTimeout(resolve, 1000));
