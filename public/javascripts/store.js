@@ -14,11 +14,13 @@ class Store {
     const url = new URL(url_string);
     this.demoConfig = {
       // destination | direct | none
+      vaultCard: url.searchParams.get('vaultCard') || 'novault',
       workflow: url.searchParams.get('workflow') || 'none',
       'aquarium-id': url.searchParams.get('aquarium-id'),
       request3DSecure: url.searchParams.get('request3DSecure') || 'false',
       piConfirmation:
         url.searchParams.get('piConfirmation') || 'clientconfirmation',
+      captureType: url.searchParams.get('captureType') || 'authncapture',
       usage: url.searchParams.get('usage') || 'onSession',
     };
 
@@ -46,7 +48,7 @@ class Store {
   getOrderTotal() {
     return Object.values(this.lineItems).reduce(
       (total, {product, sku, quantity}) =>
-        total + quantity * this.products[product].skus.data[0].price,
+        total + quantity * this.products[product].price,
       0
     );
   }
@@ -82,12 +84,13 @@ class Store {
   // Load the product details.
   async loadProducts() {
     const productsResponse = await fetch('/products');
-    const products = (await productsResponse.json()).data;
+    const products = (await productsResponse.json());
     products.forEach(product => (this.products[product.id] = product));
   }
 
   // Create an order object to represent the line items.
   async createOrder(
+    amount,
     currency,
     items,
     email,
@@ -103,6 +106,7 @@ class Store {
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({
           demoConfig: this.demoConfig,
+          amount,
           currency,
           items,
           email,
@@ -127,12 +131,36 @@ class Store {
   }
 
   // Pay the specified order by sending a payment source alongside it.
+  async captureOrder(orderid, paymentIntentId) {
+   
+    try {
+      const response = await fetch(`/orders/${orderid}/capture`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          paymentIntentId
+        }),
+      });
+      const data = await response.json();
+      if (data.error) {
+        return {error: data.error};
+      } else {
+        return data;
+      }
+    } catch (err) {
+      return {error: err.message};
+    }
+  }
+
+
+  // Pay the specified order by sending a payment source alongside it.
   async payOrder({order, source, paymentIntentId, setupIntentPaymentMethod}) {
     try {
       const response = await fetch(`/orders/${order.id}/pay`, {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({
+          order:order,
           source,
           demoConfig: store.demoConfig,
           payment_intent: paymentIntentId,
@@ -203,16 +231,16 @@ class Store {
         return Math.floor(Math.random() * (max - min + 1)) + min;
       };
       const quantity = randomQuantity(1, 2);
-      let sku = product.skus.data[0];
+      let sku = product;
       let skuPrice = this.formatPrice(sku.price, sku.currency);
       let lineItemPrice = this.formatPrice(sku.price * quantity, sku.currency);
       let lineItem = document.createElement('div');
       lineItem.classList.add('line-item');
       lineItem.innerHTML = `
-        <img class="image" src="/images/products/${product.id}.png">
+        <img class="image" src="${sku.images[0]}">
         <div class="label">
-          <p class="product">${product.name}</p>
-          <p class="sku">${Object.values(sku.attributes).join(' ')}</p>
+          <p class="product">${sku.name}</p>
+          <p class="sku">${sku.description}</p>
         </div>
         <p class="count">${quantity} x ${skuPrice}</p>
         <p class="price">${lineItemPrice}</p>`;

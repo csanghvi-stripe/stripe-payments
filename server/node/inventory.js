@@ -11,15 +11,20 @@
 
 const config = require('./config');
 const stripe = config.stripe.client;
+const { v4: uuidv4 } = require('uuid');
+
 const stripeOrders = config.stripe.ordersClient;
+/*
 // We use the older orders API since it removed embedding product SKUs
 // And we haven't made that change yet
 stripeOrders.setApiVersion(config.stripe.ordersApiVersion);
 stripe.setApiVersion(config.stripe.apiVersion);
+*/
 
 // Create an order.
 const createOrder = async (
   demoConfig,
+  amount,
   currency,
   items,
   email,
@@ -30,6 +35,7 @@ const createOrder = async (
   usesSetupIntent
 ) => {
   // Create order
+  /*
   let order = await stripeOrders.orders.create({
     currency,
     items,
@@ -39,6 +45,30 @@ const createOrder = async (
       status: 'created',
     },
   });
+  */
+ if (demoConfig.vaultCard === 'vault' && customer === undefined){
+   //Create a customer object
+  const customerObj = await stripe.customers.create({
+     email: email, 
+     name: shipping.name,
+     shipping:shipping
+   })
+   customer = customerObj.id;
+ }
+  let order = {
+    id:uuidv4(),
+    amount,
+    currency,
+    items,
+    email,
+    shipping,
+    metadata: {
+      status: 'created',
+    },
+    customer,
+    payment_method
+    }
+    console.log('Created an order with id %o', order.id)
   if (usesSetupIntent) {
     const setupIntent = await stripe.setupIntents.create();
     order.setupIntent = setupIntent.client_secret;
@@ -62,7 +92,9 @@ const createOrder = async (
           ? 'manual'
           : undefined,
       confirm: demoConfig.piConfirmation === 'serverconfirmation',
+      capture_method: demoConfig.captureType === 'onlyauth' ? 'manual' : undefined,
       use_stripe_sdk: true,
+      setup_future_usage : demoConfig.vaultCard === 'vault' ? 'on_session' : undefined
     };
 
     let paymentIntent;
@@ -137,7 +169,7 @@ const updateOrder = async ({
     }
   }
   let updatedOrder = order;
-  updatedOrder = await stripeOrders.orders.update(order.id, properties);
+  //updatedOrder = await stripeOrders.orders.update(order.id, properties);
   return {
     paymentIntent,
     order: updatedOrder,
@@ -146,7 +178,19 @@ const updateOrder = async ({
 
 // List all products.
 const listProducts = async () => {
-  return await stripeOrders.products.list({limit: 3, type: 'good'});
+  const plist = await stripeOrders.products.list({limit: 3});
+  const productPriceList = plist.data.map(async item => {
+    let priceItem =  await stripeOrders.prices.list({product:item.id, limit: 1})
+    item.price = priceItem.data[0].unit_amount
+    item.currency = priceItem.data[0].currency
+    return item
+  })
+  const priceList = await Promise.all(productPriceList)
+  .then((values) => {
+    return (values)
+  })
+  return priceList;
+  
 };
 
 // Retrieve a product by ID.
@@ -156,14 +200,14 @@ const retrieveProduct = async productId => {
 
 // Validate that products exist.
 const productsExist = productList => {
-  const validProducts = ['increment', 'shirt', 'pins'];
-  return productList.data.reduce((accumulator, currentValue) => {
+  const validProducts = ['table', 'barstool', 'sofa'];
+  return productList.reduce((accumulator, currentValue) => {
     return (
       accumulator &&
-      productList.data.length === 3 &&
+      productList.length === 3 &&
       validProducts.includes(currentValue.id)
     );
-  }, !!productList.data.length);
+  }, !!productList.length);
 };
 
 /**

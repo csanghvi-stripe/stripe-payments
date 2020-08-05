@@ -18,7 +18,7 @@ module.exports = {
   // Store currency.
   // Note: A few payment methods like iDEAL or SOFORT only work with euros,
   // so it's a good common denominator to test both Elements and Sources.
-  currency: 'eur',
+  currency: 'usd',
 
   // Configuration for Stripe.
   // API Keys: https://dashboard.stripe.com/account/apikeys
@@ -29,8 +29,8 @@ module.exports = {
     // The two-letter country code of your Stripe account (required for Payment Request).
     country: process.env.STRIPE_ACCOUNT_COUNTRY || 'US',
     // API version to set for this app (Stripe otherwise uses your default account version).
-    ordersApiVersion: '2018-02-06',
-    apiVersion: '2019-03-14',
+   // ordersApiVersion: '2018-02-06',
+   // apiVersion: '2019-03-14',
     // Use your test keys for development and live keys for real charges in production.
     // For non-card payments like iDEAL, live keys will redirect to real banking sites.
     stripeStoredCustomer: process.env.STRIPE_CUSTOMER_ID,
@@ -48,7 +48,7 @@ module.exports = {
   },
 
   // Server port.
-  port: process.env.PORT || 8000,
+  port: process.env.PORT || 4000,
 
   // Tunnel to serve the app over HTTPS and be able to receive webhooks locally.
   // Optionally, if you have a paid ngrok account, you can specify your `subdomain`

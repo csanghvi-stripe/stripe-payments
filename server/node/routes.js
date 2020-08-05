@@ -36,6 +36,7 @@ router.get('/', (req, res) => {
 router.post('/orders', async (req, res, next) => {
   let {
     demoConfig,
+    amount,
     currency,
     items,
     email,
@@ -46,9 +47,10 @@ router.post('/orders', async (req, res, next) => {
     createSetupIntent,
   } = req.body;
   try {
-    console.log(req.body);
+    console.log('Received an order %o',req.body);
     let order = await orders.create(
       demoConfig,
+      amount,
       currency,
       items,
       email,
@@ -64,17 +66,37 @@ router.post('/orders', async (req, res, next) => {
   }
 });
 
+
+// Complete payment for an order using a source.
+router.post('/orders/:id/capture', async (req, res, next) => {
+  let {
+    paymentIntentId,
+  } = req.body;
+  console.log('Received req to capture pi %o!', paymentIntentId)
+  try {
+    const paymentIntent = await stripe.paymentIntents.capture(
+      paymentIntentId
+    );
+    return res.status(200).json({paymentIntent});
+  } catch (err) {
+    return res.status(500).json({error: err.message});
+  }
+});
+
+
 // Complete payment for an order using a source.
 router.post('/orders/:id/pay', async (req, res, next) => {
   let {
+    order,
     source,
     demoConfig,
-    payment_intent: paymentIntentId,
+    payment_intent,
     off_session_payment_method: offSessionPaymentMethod,
   } = req.body;
+  console.log('Received req to pay order %o!', order.id)
   try {
     // Retrieve the order associated to the ID.
-    let order = await orders.retrieve(req.params.id);
+    //let order = await orders.retrieve(req.params.id);
     // Verify that this order actually needs to be paid.
     if (
       order.metadata.status === 'pending' ||
@@ -119,6 +141,7 @@ router.post('/orders/:id/pay', async (req, res, next) => {
         properties: {metadata: {status}},
       });
     } else if (offSessionPaymentMethod) {
+
       // Update the order with the charge status and possibly
       // confirm the payment intent
       let result = await orders.update({
@@ -130,7 +153,6 @@ router.post('/orders/:id/pay', async (req, res, next) => {
       order = result.order;
       paymentIntent = result.paymentIntent;
     } else {
-      // Update the order with the charge status and possibly
       // confirm the payment intent
       let result = await orders.update({
         order,
@@ -329,6 +351,7 @@ router.get('/products', async (req, res) => {
   const productList = await products.list();
   // Check if products exist on Stripe Account.
   if (products.exist(productList)) {
+    console.log('Sending a response for productlist is %o', productList.length)
     res.json(productList);
   } else {
     // We need to set up the products.

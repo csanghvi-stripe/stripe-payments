@@ -18,17 +18,30 @@
 
   // Create references to the main form and its submit button.
   const form = document.getElementById('payment-form');
+  const randomize = document.getElementById('randomize')
+  randomize.onclick = () => {
+        // Retrieve the user information from the form.
+    form.querySelector('input[name=name]').value = 'Ron Burgandy';
+    const country = form.querySelector('select[name=country] option:checked').value;
+    form.querySelector('input[name=email]').value = 'ron@demo.com';
+    form.querySelector('input[name=address]').value = '510 Townsend St',
+    form.querySelector('input[name=city]').value = 'San Francisco',
+    form.querySelector('input[name=postal_code]').value = '94103',
+    form.querySelector('input[name=state]').value = 'CA'
+  }
   const submitButton = form.querySelector('button[type=submit]');
 
   // Create a Stripe client.
-  const stripe = Stripe(config.stripePublishableKey, {
-    betas: ['card_payment_method_beta_1', 'payment_intent_beta_3'],
-  });
+  const stripe = Stripe(config.stripePublishableKey);
 
   // Hook up payment intent workflow selector
+  const vaultDropDown = document.getElementById('vault-selection');
   const workflowDropDown = document.getElementById('workflow-selection');
   const piConfirmationDropDown = document.getElementById(
     'pi-confirmation-selection'
+  );
+  const captureTypeDropDown = document.getElementById(
+    'auth-n-capture'
   );
   const futureUsageDropdown = document.getElementById('future-usage-selection');
   // const request3DSecureCheckbox = document.getElementById('request-3d-secure');
@@ -50,10 +63,17 @@
   document.getElementById(
     'tracer-link'
   ).href = `https://stripe-tracer.com?aquarium-id=${aquariumId}`;
+  vaultDropDown.value = store.demoConfig.vaultCard; 
   piConfirmationDropDown.value = store.demoConfig.piConfirmation;
   workflowDropDown.value = store.demoConfig.workflow;
   futureUsageDropdown.value = store.demoConfig.usage;
+  captureTypeDropDown.value = store.demoConfig.captureType;
   // request3DSecureCheckbox.checked = store.demoConfig.request3DSecure === 'true';
+  vaultDropDown.addEventListener('change', () =>{
+    store.updateConfig({
+      vaultCard:vaultDropDown.value
+    })
+  })
   workflowDropDown.addEventListener('change', () =>
     store.updateConfig({
       workflow: workflowDropDown.value,
@@ -64,6 +84,11 @@
       piConfirmation: piConfirmationDropDown.value,
     });
   });
+  captureTypeDropDown.addEventListener('change', ()=> {
+    store.updateConfig({
+      captureType: captureTypeDropDown.value,
+    })
+  })
   futureUsageDropdown.addEventListener('change', () => {
     // off-session payments must use server-side confirmation
     store.updateConfig({
@@ -89,8 +114,8 @@
   // });
 
   // setup Tracing
-  Tracer.SetupTracingConfig(store);
-  Tracer.TraceStripe(stripe);
+  //Tracer.SetupTracingConfig(store);
+  //Tracer.TraceStripe(stripe);
 
   /**
    * Setup Stripe Elements.
@@ -226,6 +251,7 @@
     try {
       // Create the order using the email and shipping information from the Payment Request callback.
       const order = await store.createOrder(
+        store.getOrderTotal(),
         config.currency,
         store.getOrderItems(),
         event.payerEmail,
@@ -288,6 +314,7 @@
 
   // Check if the Payment Request is available (or Apple Pay on the Web).
   const paymentRequestSupport = await paymentRequest.canMakePayment();
+  console.log('Adding infor on payment re2uest support %o', paymentRequestSupport)
   if (paymentRequestSupport) {
     // Display the Pay button by mounting the Element in the DOM.
     paymentRequestButton.mount('#payment-request-button');
@@ -297,6 +324,8 @@
     // Show the payment request section.
     document.getElementById('payment-request').classList.add('visible');
   }
+
+
 
   /**
    * Handle the form submission.
@@ -324,8 +353,7 @@
     // Retrieve the user information from the form.
     const payment = form.querySelector('input[name=payment]:checked').value;
     const name = form.querySelector('input[name=name]').value;
-    const country = form.querySelector('select[name=country] option:checked')
-      .value;
+    const country = form.querySelector('select[name=country] option:checked').value;
     const email = form.querySelector('input[name=email]').value;
     const shipping = {
       name,
@@ -363,7 +391,15 @@
     ) {
       // Useful if we want to inspect the newly entered card information
       // prior to initiating payment
-      let result = await stripe.createPaymentMethod('card', card);
+      let result = await stripe.createPaymentMethod({
+                                type:'card', 
+                                card,    
+                                billing_details: {
+                                address:shipping.address,
+                                email:email,
+                                name:name
+                              },
+                            });
       cardSource = result.paymentMethod;
     } else if (payment === 'stored_card') {
       cardSource = {id: config.stripeStoredCardSource};
@@ -373,6 +409,7 @@
       customer = config.stripeStoredCustomer;
     }
     let order = await store.createOrder(
+      store.getOrderTotal(),
       config.currency,
       store.getOrderItems(),
       email,
@@ -387,10 +424,18 @@
       submitButton.textContent = 'Setting up Payment Method...';
       let setupIntent = order.setupIntent;
 
-      const cardSetupResult = await stripe.handleCardSetup(setupIntent, card);
-      const {setupIntent: confirmedSetupIntent} = cardSetupResult;
+      const cardSetupResult = await stripe.confirmCardSetup(
+        setupIntent,
+        {
+          payment_method: {
+            card,
+            billing_details: {
+              name: name.value,
+            },
+          },
+        })
       error = cardSetupResult.error;
-      cardSource = confirmedSetupIntent.payment_method;
+      cardSource = cardSetupResult.setupIntent.payment_method;
 
       // Yes probably should be a loop but this was way quicker to write!
       submitButton.textContent =
@@ -411,12 +456,15 @@
       submitButton.textContent = 'Processing off-session payment...';
       const result = await store.payOrder({
         order,
-        setupIntentPaymentMethod: confirmedSetupIntent.payment_method,
+        setupIntentPaymentMethod: cardSource,
       });
       order.paymentIntent = result.paymentIntent;
+      //usesPaymentIntent = true;
       error = result.error;
       if (error) {
         return await handleOrder({metadata: {status: 'failed'}}, null, error);
+      } else if (order.paymentIntent.status === 'succeeded') {
+        await handleOrder({metadata: {status: 'paid'}}, null, null);
       }
     }
 
@@ -429,23 +477,25 @@
         payment === 'card'
       ) {
         // collect card info
-        const result = await stripe.handleCardPayment(
-          order.paymentIntent.client_secret,
-          card,
-          {
-            source_data: {
-              owner: {
-                name,
-              },
-            },
-          }
-        );
+        const result = await stripe.confirmCardPayment(
+          order.paymentIntent.client_secret, {
+                    payment_method: {
+                      card,    
+                      billing_details: {
+                      address:shipping.address,
+                      email:email,
+                      name:name
+                    },
+                  }
+                }
+          );
         paymentIntent = result.paymentIntent;
         error = result.error;
         if (error) {
           return await handleOrder({metadata: {status: 'failed'}}, null, error);
         }
       }
+
       if (
         // If the Payment Intent has a source, requires confirmation or
         // requires a source action (3d secure authentication)
@@ -485,7 +535,7 @@
           paymentIntent.confirmation_method === 'automatic' &&
           ['card', 'stored_card', 'stored_card_3ds'].includes(payment))
       ) {
-        const result = await stripe.handleCardPayment(
+        const result = await stripe.confirmCardPayment(
           paymentIntent.client_secret
         );
         paymentIntent = result.paymentIntent;
@@ -499,6 +549,11 @@
         await handleOrder({metadata: {status: 'failed'}}, null, error);
       } else if (paymentIntent.status === 'succeeded') {
         await handleOrder({metadata: {status: 'paid'}}, null, null);
+      } else if (        
+        paymentIntent.status === 'requires_capture' &&
+        ['card', 'stored_card', 'stored_card_3ds'].includes(payment)
+        ){
+          await handleOrder({id: order.id,metadata: {status: 'authorized'}}, null, null, paymentIntent.id);
       }
     } else if (payment === 'sepa_debit') {
       // Create a SEPA Debit source from the IBAN information.
@@ -570,7 +625,7 @@
   });
 
   // Handle the order and source activation if required
-  const handleOrder = async (order, source, error = null) => {
+  const handleOrder = async (order, source, error = null, pi) => {
     const mainElement = document.getElementById('main');
     const confirmationElement = document.getElementById('confirmation');
     if (error) {
@@ -717,6 +772,7 @@
 
       case 'paid':
         // Success! Payment is confirmed. Update the interface to display the confirmation screen.
+        mainElement.classList.remove('checkout')
         mainElement.classList.remove('processing');
         mainElement.classList.remove('receiver');
         // Update the note about receipt and shipping (the payment has been fully confirmed by the bank).
@@ -724,6 +780,29 @@
           'We just sent your receipt to your email address, and your items will be on their way shortly.';
         mainElement.classList.add('success');
         break;
+      
+      case 'authorized':
+        // Success! Payment is confirmed. Update the interface to display the confirmation screen.
+        mainElement.classList.remove('checkout')
+        mainElement.classList.remove('processing');
+        mainElement.classList.remove('receiver');
+        // Update the note about receipt and shipping (the payment has been fully confirmed by the bank).
+        confirmationElement.querySelector('.note').innerText =
+          'We just sent your receipt to your email address, and your items will be on their way shortly.';
+        confirmationElement.querySelector('.note').innerHTML = "<button id='capture'>Capture</button><br>"
+        mainElement.classList.add('success');
+        /**
+         * Support for capturing payments after authorization
+         */
+        const captureElement = document.getElementById('capture');
+        captureElement.onclick = async () => {
+          const result = await store.captureOrder(order.id, pi)
+          let paymentIntent = result.paymentIntent;
+          if (paymentIntent.status === 'succeeded'){
+            await handleOrder({metadata:{status:'paid'}}, null, null);
+          }
+        }
+        break;        
     }
   };
 

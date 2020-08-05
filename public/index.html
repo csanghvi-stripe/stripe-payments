@@ -34,6 +34,7 @@
           </p>
           <section>
             <h2>Shipping &amp; Billing Information</h2>
+            <label><a href='#' id='randomize'>Click here to generate name & address</a></label>
             <fieldset class="with-state">
               <label>
                 <span>Name</span>
@@ -59,7 +60,7 @@
                 <input
                   name="address"
                   class="field"
-                  placeholder="185 Berry Street Suite 550"
+                  placeholder="510 Townsend St"
                 />
               </label>
               <label>
@@ -72,7 +73,7 @@
               </label>
               <label class="zip">
                 <span>ZIP</span>
-                <input name="postal_code" class="field" placeholder="94107" />
+                <input name="postal_code" class="field" placeholder="94103" />
               </label>
               <label class="select">
                 <span>Country</span>
@@ -350,6 +351,15 @@
             <h3>Selected Integration:</h3>
             <fieldset>
               <label class="select">
+                <span>Vault Card:</span>
+                <span class="select">
+                  <select id="vault-selection">
+                    <option value="vault">Vault</option>
+                    <option value="novault">Do not vault</option>
+                  </select>
+                </span>
+              </label>
+              <label class="select">
                 <span>Funds Flow:</span>
                 <span class="select">
                   <select id="workflow-selection">
@@ -365,6 +375,15 @@
                   <select id="pi-confirmation-selection">
                     <option value="clientconfirmation">Automatic</option>
                     <option value="serverconfirmation">Manual</option>
+                  </select>
+                </span>
+              </label>
+              <label class="select">
+                <span>Capture Method:</span>
+                <span class="select">
+                  <select id="auth-n-capture">
+                    <option value="authncapture">Automatic</option>
+                    <option value="onlyauth">Manual</option>
                   </select>
                 </span>
               </label>
@@ -439,8 +458,8 @@
 
     <!-- App -->
     <script src="/javascripts/store.js"></script>
-    <script src="https://storage.googleapis.com/stripe-tracer-js/aquarium-0.0.3.js"></script>
-    <script src="/javascripts/tracer.js"></script>
+    <!--<script src="https://storage.googleapis.com/stripe-tracer-js/aquarium-0.0.3.js"></script>-->
+    <!--<script src="/javascripts/tracer.js"></script>-->
     <script src="/javascripts/payments.js"></script>
   </body>
 </html>

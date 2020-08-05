@@ -14,14 +14,14 @@ const bodyParser = require('body-parser');
 const path = require('path');
 const ngrok = config.ngrok.enabled ? require('ngrok') : null;
 const app = express();
-const aquariumModule = require('@stripe/aquarium');
-const aquarium = new aquariumModule.Aquarium({
-  subjectName: 'stripeAPI',
-  applicationName: 'stripe-payments-demo',
-});
+//const aquariumModule = require('@stripe/aquarium');
+//const aquarium = new aquariumModule.Aquarium({
+ // subjectName: 'stripeAPI',
+ // applicationName: 'stripe-payments-demo',
+//});
 const stripe = config.stripe.client;
 
-// Setup useful middleware.
+//  useful middleware.
 // Define routes.
 
 app.use(
@@ -41,8 +41,8 @@ app.use(express.static(path.join(__dirname, '../../public')));
 app.engine('html', require('ejs').renderFile);
 app.set('view engine', 'html');
 
-const tracer = require('./tracer');
-tracer.traceApp({application: app, webhookPath: '/webhook'});
+//const tracer = require('./tracer');
+//tracer.traceApp({application: app, webhookPath: '/webhook'});
 
 // Setup Routes to use Aquarium Session ID from aquarium-id url param
 

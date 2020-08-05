@@ -16,6 +16,7 @@ class Tracer {
       store.updateConfig({'aquarium-id': aquariumId});
     }
   }
+  /*
   static async TraceStripe(stripe) {
     const demoConfig = store.getDemoConfig();
     const tracer = new aquarium.Aquarium({
@@ -108,6 +109,7 @@ class Tracer {
       },
     });
   }
+  */
 }
 
 window.Tracer = Tracer;
