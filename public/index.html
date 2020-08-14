@@ -78,7 +78,7 @@
               <label class="select">
                 <span>Country</span>
                 <div id="country" class="field US">
-                  <select name="country">
+                  <select name="country" disabled>
                     <option value="AU">Australia</option>
                     <option value="AT">Austria</option>
                     <option value="BE">Belgium</option>
@@ -422,10 +422,13 @@
         </div>
         <div class="line-item demo">
           <div id="demo">
-            <p class="label">Testmode cards</p>
+            <p class="label"><a href='https://stripe.com/docs/testing#cards'>Testmode cards</a></p>
             <p class="note">
               This app is running in test mode. You will <em>not</em> be
               charged.
+            </p>
+            <p class="note">
+              Use <strong>4242424242424242</strong> no authentication needed, use any CVV & date in the future
             </p>
             <p class="note">
               Use <strong>4000002500003155</strong> to require authentication on

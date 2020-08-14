@@ -864,7 +864,7 @@
     ach_credit_transfer: {
       name: 'Bank Transfer',
       flow: 'receiver',
-      countries: ['US'],
+      countries: ['USA'],
       currencies: ['usd'],
     },
     stored_card: {

@@ -24,14 +24,14 @@ module.exports = {
         // Create a few products and SKUs assuming they don't already exist.
         try {
           // Increment Magazine.
-          const indeed = await stripe.products.create({
-            id: 'indeed',
-            name: 'Indeed Job Posting',
-            description:'Sponsored Jobs',
-            images:['https://dpuk71x9wlmkf.cloudfront.net/wp-content/uploads/2015/11/30184705/content-img-24.jpg']
+          const bt = await stripe.products.create({
+            id: 'bt',
+            name: 'BT Invoice',
+            description:'buttler/till invoice',
+            images:['https://res-2.cloudinary.com/crunchbase-production/image/upload/c_lpad,h_170,w_170,f_auto,b_white,q_auto:eco/v1487759597/sudj19poigtajoqwwx6y.png']
           });
           await stripe.prices.create({
-            product: 'indeed',
+            product: 'bt',
             unit_amount: 500,
             currency: config.currency,
           });

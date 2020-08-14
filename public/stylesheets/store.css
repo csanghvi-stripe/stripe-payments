@@ -47,8 +47,8 @@ header {
   height: 80px;
   /*background: #fff url(/images/overstock-logo-wordmark.svg) center center no-repeat;*/
   
-  background: #fff url(/images/indeed-logo.svg) center center no-repeat;
-  /*background: #fff url('https://www.butlertill.com/wp-content/themes/Divi-child/images/butlertill-logo.svg') center center no-repeat;*/
+  /*background: #fff url(/images/indeed-logo.svg) center center no-repeat;*/
+  background: #fff url('https://www.butlertill.com/wp-content/themes/Divi-child/images/butlertill-logo.svg') center center no-repeat;
 
   border-bottom: 1px solid #f3f3ff;
 }

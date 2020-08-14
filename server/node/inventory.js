@@ -200,7 +200,7 @@ const retrieveProduct = async productId => {
 
 // Validate that products exist.
 const productsExist = productList => {
-  const validProducts = ['indeed'];
+  const validProducts = ['bt'];
   console.log('Product list is %o', productList)
   return productList.reduce((accumulator, currentValue) => {
     return (
