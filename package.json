@@ -16,7 +16,6 @@
     "start": "node --version && node --harmony-promise-finally server/node/server.js"
   },
   "dependencies": {
-    "@stripe/aquarium": "^0.0.3",
     "async-local-storage": "^2.1.0",
     "body-parser": "^1.17.1",
     "continuation-local-storage": "^3.2.1",
