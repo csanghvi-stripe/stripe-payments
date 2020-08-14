@@ -13,7 +13,7 @@
     "node": "8.x"
   },
   "scripts": {
-    "start": "node --version && node --harmony-promise-finally server/node/server.js"
+    "start": "node server/node/server.js"
   },
   "dependencies": {
     "async-local-storage": "^2.1.0",
