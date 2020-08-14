@@ -48,7 +48,7 @@ module.exports = {
   },
 
   // Server port.
-  port: process.env.PORT || 4000,
+  port: process.env.PORT || 3000,
 
   // Tunnel to serve the app over HTTPS and be able to receive webhooks locally.
   // Optionally, if you have a paid ngrok account, you can specify your `subdomain`
