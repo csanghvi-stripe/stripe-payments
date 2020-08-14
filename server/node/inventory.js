@@ -178,7 +178,7 @@ const updateOrder = async ({
 
 // List all products.
 const listProducts = async () => {
-  const plist = await stripeOrders.products.list({limit: 3});
+  const plist = await stripeOrders.products.list({limit: 1});
   const productPriceList = plist.data.map(async item => {
     let priceItem =  await stripeOrders.prices.list({product:item.id, limit: 1})
     item.price = priceItem.data[0].unit_amount
@@ -200,11 +200,12 @@ const retrieveProduct = async productId => {
 
 // Validate that products exist.
 const productsExist = productList => {
-  const validProducts = ['table', 'barstool', 'sofa'];
+  const validProducts = ['indeed'];
+  console.log('Product list is %o', productList)
   return productList.reduce((accumulator, currentValue) => {
     return (
       accumulator &&
-      productList.length === 3 &&
+      productList.length === 1 &&
       validProducts.includes(currentValue.id)
     );
   }, !!productList.length);
